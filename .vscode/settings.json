@@ -1,0 +1,33 @@
+{
+    "python.testing.pytestArgs": ["tests"],
+    "ruff.enable": true,
+    "flake8.ignorePatterns": ["**/*.py"],
+    "ruff.lint.enable": true,
+    "flake8.enabled": false,
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    },
+  
+    "[python]": {
+      "editor.defaultFormatter": "charliermarsh.ruff"
+    },
+    "search.exclude": {
+      "**/__pycache__": true,
+      "**/.mypy_cache": true,
+      "**/.pytest_cache": true,
+      "**/.tox": true,
+      "**/charts": true
+    },
+    "files.exclude": {
+      "**/__pycache__": true,
+      "**/.mypy_cache": true,
+      "**/.pytest_cache": true,
+      "**/.tox": true,
+      "**/charts": true
+    }
+  }
+  
