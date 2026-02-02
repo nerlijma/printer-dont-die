@@ -47,7 +47,17 @@ def print_photo(file_path):
         print(f"Operating system '{current_os}' is not supported for printing.")
         return
 
-    print(f"Executing print command ({current_os}): {command}")
+    # 2. Check if dry_run is enabled
+    dry_run = config.get("dry_run", False)
+    if dry_run:
+        print("DRY RUN MODE: Skipping actual print command execution.")
+        return 0
 
-    # 2. Execute the command
-    return os.system(command)
+    # 3. Execute the command
+    print(f"Executing print command ({current_os}): {command}")
+    exit_code = os.system(command)
+    if exit_code == 0:
+        print("Print job successfully sent to the system queue.")
+    else:
+        print(f"ERROR: Failed to send print job. Exit code: {exit_code}")
+    return exit_code
