@@ -28,6 +28,11 @@ def print_photo(file_path):
             if printer_tool and printer_tool.strip():
                 # Use the specified printer tool with -print-to option
                 # Format: {printer_tool_exe} -print-to "{printer_name}" "{file_path}"
+                # Assume both executables are in the same directory (where config.json is)
+                from config import get_base_path
+
+                base_path = get_base_path()
+                printer_tool = os.path.join(base_path, printer_tool)
                 command = f'"{printer_tool}" -print-to "{printer_target}" "{file_path}"'
             else:
                 # Fallback: use Windows print command if no tool specified
