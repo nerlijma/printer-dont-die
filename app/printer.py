@@ -19,14 +19,26 @@ def print_photo(file_path):
 
     # 1. Select the appropriate command
     if current_os == "Windows":
-        # Using the reliable rundll32 trick to leverage the native Windows photo viewer print function.
-        # This requires the image file path and the EXACT printer name to be in quotes.
-        dll_path = r"C:\WINDOWS\system32\shimgvw.dll"
-        function_name = "ImageView_PrintTo"
-        # Command format: rundll32 <dll_path>,<function_name> "file_path" "printer_name"
-        command = (
-            f'rundll32 "{dll_path}",{function_name} "{file_path}" "{printer_target}"'
-        )
+        # Check if file is PDF or image
+        file_ext = os.path.splitext(file_path)[1].lower()
+
+        if file_ext == ".pdf":
+            # For PDFs, use the configured printer tool (e.g., SumatraPDF)
+            printer_tool = config.get("printer_tool_exe", "")
+            if printer_tool and printer_tool.strip():
+                # Use the specified printer tool with -print-to option
+                # Format: {printer_tool_exe} -print-to "{printer_name}" "{file_path}"
+                command = f'"{printer_tool}" -print-to "{printer_target}" "{file_path}"'
+            else:
+                # Fallback: use Windows print command if no tool specified
+                command = f'print /D:"{printer_target}" "{file_path}"'
+        else:
+            # For images, use the reliable rundll32 trick to leverage the native Windows photo viewer print function.
+            # This requires the image file path and the EXACT printer name to be in quotes.
+            dll_path = r"C:\WINDOWS\system32\shimgvw.dll"
+            function_name = "ImageView_PrintTo"
+            # Command format: rundll32 <dll_path>,<function_name> "file_path" "printer_name"
+            command = f'rundll32 "{dll_path}",{function_name} "{file_path}" "{printer_target}"'
 
     elif current_os == "Linux":
         # Using LPR, the standard command-line print utility for CUPS (Common Unix Printing System).

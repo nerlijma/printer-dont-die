@@ -10,6 +10,7 @@ Edit `config.json` in the project root:
 {
   "print_frequency_days": 7,
   "printer_name_or_ip": "YOUR_PRINTER_NAME_HERE",
+  "printer_tool_exe": "SumatraPDF-3.5.2-64.exe",
   "last_printed_date": "",
   "dry_run": false
 }
@@ -18,6 +19,7 @@ Edit `config.json` in the project root:
 **Configuration Options:**
 - `print_frequency_days`: How often to print (in days). Default: 7
 - `printer_name_or_ip`: Exact name of your printer (must match exactly as shown in system settings)
+- `printer_tool_exe`: (Windows only) Path to PDF printer tool executable (e.g., SumatraPDF). Required for PDF printing on Windows. Leave empty to use default Windows print command.
 - `last_printed_date`: Last print date (ISO format: YYYY-MM-DD). Leave empty for first run
 - `dry_run`: Set to `true` to test without actually printing. Set to `false` for normal operation
 
