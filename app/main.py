@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import os
 import sys
@@ -27,10 +28,42 @@ def print_meipass_contents():
             print(f"app/ folder not found in sys._MEIPASS: {sys._MEIPASS}")
 
 
-def check_and_run_print_job():
+def is_within_time_range(config):
+    """Check if current time is within run_time_start and run_time_end range."""
+    run_time_start = config.get("run_time_start", "")
+    run_time_end = config.get("run_time_end", "")
+
+    if not run_time_start or not run_time_end:
+        raise ValueError(
+            "run_time_start and run_time_end must be configured in config.json"
+        )
+
+    try:
+        now = datetime.datetime.now().time()
+        start_time = datetime.datetime.strptime(run_time_start, "%H:%M").time()
+        end_time = datetime.datetime.strptime(run_time_end, "%H:%M").time()
+
+        # Validate that end_time is greater than start_time (same day)
+        if end_time <= start_time:
+            raise ValueError(
+                f"run_time_end ({run_time_end}) must be greater than run_time_start ({run_time_start})"
+            )
+
+        # Check if current time is within the range
+        return start_time <= now <= end_time
+    except ValueError as e:
+        # Re-raise if it's our validation error, otherwise it's a format error
+        if "must be greater" in str(e):
+            raise
+        raise ValueError(
+            f"Invalid time format in config. Expected HH:MM format. Error: {e}"
+        )
+
+
+def job_sync():
     """
     Checks the configuration date and frequency to determine if a print job
-    should be executed today.
+    should be executed today. This is the synchronous job function.
     """
     config = load_config()
     if not config:
@@ -94,7 +127,35 @@ def check_and_run_print_job():
             print("ERROR: Could not download or find the photo file. Aborting print.")
 
 
-if __name__ == "__main__":
+async def main():
+    """Main async function that runs the print job in a loop."""
     # Print sys._MEIPASS contents at startup for debugging
     print_meipass_contents()
-    check_and_run_print_job()
+
+    while True:
+        config = load_config()
+        if config:
+            try:
+                # Check if we're within the allowed time range
+                if is_within_time_range(config):
+                    # Run the job asynchronously without blocking the event loop
+                    await asyncio.to_thread(job_sync)
+                else:
+                    # Skip execution if outside time range
+                    now = datetime.datetime.now().strftime("%H:%M")
+                    print(
+                        f"Current time {now} is outside allowed range. Skipping execution."
+                    )
+            except ValueError as e:
+                print(f"ERROR: {e}")
+                print("Please configure run_time_start and run_time_end in config.json")
+                # Wait before retrying
+                await asyncio.sleep(60)
+                continue
+
+        # Wait 10 minutes (600 seconds) between executions
+        await asyncio.sleep(600)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
