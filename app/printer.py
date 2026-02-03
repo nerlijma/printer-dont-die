@@ -33,7 +33,8 @@ def print_photo(file_path):
 
                 base_path = get_base_path()
                 printer_tool = os.path.join(base_path, printer_tool)
-                command = f'"{printer_tool}" -print-to "{printer_target}" "{file_path}"'
+                # Don't quote the executable path, only quote arguments that might have spaces
+                command = f'{printer_tool} -print-to "{printer_target}" "{file_path}"'
             else:
                 # Fallback: use Windows print command if no tool specified
                 command = f'print /D:"{printer_target}" "{file_path}"'
