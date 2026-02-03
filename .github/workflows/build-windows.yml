@@ -24,6 +24,7 @@ jobs:
           pyinstaller --onefile --name printer-dont-die --add-data="config.json;." --add-data="app/resources;app/resources" app/main.py
       
       - name: Copy config.json to dist
+        shell: cmd
         run: |
           if not exist dist\config.json (
             copy config.json dist\config.json
