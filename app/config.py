@@ -2,6 +2,8 @@ import json
 import os
 import sys
 
+from loguru import logger
+
 
 def get_base_path():
     """
@@ -49,8 +51,8 @@ def load_config():
             with open("config.json", "r") as f:
                 return json.load(f)
         except FileNotFoundError:
-            print(
-                f"Error: config.json not found. Looked in: {config_path} and current directory."
+            logger.error(
+                f"config.json not found. Looked in: {config_path} and current directory."
             )
             return None
 
@@ -94,5 +96,5 @@ def update_nested_config(keys, value):
             json.dump(config, f, indent=2)
         return True
     except Exception as e:
-        print(f"ERROR: Failed to save config: {e}")
+        logger.error(f"Failed to save config: {e}")
         return False

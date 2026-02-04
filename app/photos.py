@@ -2,6 +2,7 @@ import os
 import sys
 
 from config import get_resource_path
+from loguru import logger
 
 
 def get_random_photo():
@@ -25,17 +26,17 @@ def get_random_photo():
             photo_path = alt_path
 
     if os.path.exists(photo_path):
-        print(f"Using test photo: {photo_path}")
+        logger.info(f"Using test photo: {photo_path}")
         return os.path.abspath(photo_path)
     else:
-        print(f"ERROR: test_photo.pdf not found at: {photo_path}")
+        logger.error(f"test_photo.pdf not found at: {photo_path}")
         if getattr(sys, "frozen", False):
-            print(f"DEBUG: sys._MEIPASS = {sys._MEIPASS}")
-            print(
-                f"DEBUG: Looking in: {os.path.join(sys._MEIPASS, 'app', 'resources')}"
+            logger.debug(f"sys._MEIPASS = {sys._MEIPASS}")
+            logger.debug(
+                f"Looking in: {os.path.join(sys._MEIPASS, 'app', 'resources')}"
             )
             if os.path.exists(os.path.join(sys._MEIPASS, "app")):
-                print(
-                    f"DEBUG: Contents of {os.path.join(sys._MEIPASS, 'app')}: {os.listdir(os.path.join(sys._MEIPASS, 'app'))}"
+                logger.debug(
+                    f"Contents of {os.path.join(sys._MEIPASS, 'app')}: {os.listdir(os.path.join(sys._MEIPASS, 'app'))}"
                 )
         return None

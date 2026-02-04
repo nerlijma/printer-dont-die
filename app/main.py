@@ -2,10 +2,43 @@ import asyncio
 import datetime
 import os
 import sys
+from pathlib import Path
 
-from config import load_config, update_config
+from config import get_base_path, load_config, update_config
+from loguru import logger
 from photos import get_random_photo
 from printer import print_photo
+
+
+def setup_logger():
+    """Configure loguru logger with daily rotation and 10-day retention."""
+    # Remove default handler
+    logger.remove()
+
+    # Get logs directory (same as executable/config.json location)
+    base_path = get_base_path()
+    logs_dir = Path(base_path) / "logs"
+    logs_dir.mkdir(exist_ok=True)
+
+    # Configure file logging with daily rotation and 10-day retention
+    log_file = logs_dir / "printer-dont-die_{time:YYYY-MM-DD}.log"
+    logger.add(
+        log_file,
+        rotation="00:00",  # Rotate at midnight
+        retention="10 days",  # Keep logs for 10 days
+        format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}",
+        level="INFO",
+        compression=None,  # No compression for daily logs
+    )
+
+    # Also log to console for immediate feedback
+    logger.add(
+        sys.stderr,
+        format="{time:HH:mm:ss} | {level} | {message}",
+        level="INFO",
+    )
+
+    logger.info(f"Logger configured. Logs directory: {logs_dir}")
 
 
 def print_meipass_contents():
@@ -13,19 +46,19 @@ def print_meipass_contents():
     if getattr(sys, "frozen", False):
         app_path = os.path.join(sys._MEIPASS, "app")
         if os.path.exists(app_path):
-            print("Contents of app/ in sys._MEIPASS:")
+            logger.debug("Contents of app/ in sys._MEIPASS:")
             try:
                 for root, dirs, files in os.walk(app_path):
                     level = root.replace(app_path, "").count(os.sep)
                     indent = " " * 2 * level
-                    print(f"{indent}{os.path.basename(root)}/")
+                    logger.debug(f"{indent}{os.path.basename(root)}/")
                     subindent = " " * 2 * (level + 1)
                     for file in files:
-                        print(f"{subindent}{file}")
+                        logger.debug(f"{subindent}{file}")
             except Exception as e:
-                print(f"  Error listing contents: {e}")
+                logger.error(f"Error listing contents: {e}")
         else:
-            print(f"app/ folder not found in sys._MEIPASS: {sys._MEIPASS}")
+            logger.warning(f"app/ folder not found in sys._MEIPASS: {sys._MEIPASS}")
 
 
 def is_within_time_range(config):
@@ -74,7 +107,7 @@ def job_sync():
 
     # If dry_run is true, always run and skip date checking
     if dry_run:
-        print("DRY RUN MODE: Skipping date check, will always run.")
+        logger.info("DRY RUN MODE: Skipping date check, will always run.")
         should_print = True
     else:
         frequency_days = config.get("print_frequency_days", 7)
@@ -91,14 +124,14 @@ def job_sync():
 
                 if days_passed >= frequency_days:
                     should_print = True
-                    print(f"It has been {days_passed} days. Time to print!")
+                    logger.info(f"It has been {days_passed} days. Time to print!")
                 else:
-                    print(
+                    logger.info(
                         f"Last print was {days_passed} days ago. Waiting for {frequency_days} days."
                     )
 
             except ValueError:
-                print(
+                logger.error(
                     "Configuration error: 'last_printed_date' is invalid. Printing now."
                 )
                 should_print = True
@@ -106,7 +139,7 @@ def job_sync():
         else:
             # First execution, no date recorded
             should_print = True
-            print("First time run. Printing photo.")
+            logger.info("First time run. Printing photo.")
 
     # Execute the job if scheduled
     if should_print:
@@ -117,18 +150,21 @@ def job_sync():
             # STEP 2: Print
             exit_code = print_photo(temp_photo_path)
             if exit_code != 0:
-                print(f"ERROR: Failed to send print job. Exit code: {exit_code}")
+                logger.error(f"Failed to send print job. Exit code: {exit_code}")
                 return
             else:
                 update_config("last_printed_date", datetime.date.today().isoformat())
 
             # Note: test_photo.pdf is never deleted as it's part of the resources
         else:
-            print("ERROR: Could not download or find the photo file. Aborting print.")
+            logger.error("Could not download or find the photo file. Aborting print.")
 
 
 async def main():
     """Main async function that runs the print job in a loop."""
+    # Setup logger first
+    setup_logger()
+
     # Print sys._MEIPASS contents at startup for debugging
     print_meipass_contents()
 
@@ -143,15 +179,21 @@ async def main():
                 else:
                     # Skip execution if outside time range
                     now = datetime.datetime.now().strftime("%H:%M")
-                    print(
+                    logger.info(
                         f"Current time {now} is outside allowed range. Skipping execution."
                     )
             except ValueError as e:
-                print(f"ERROR: {e}")
-                print("Please configure run_time_start and run_time_end in config.json")
+                logger.error(f"{e}")
+                logger.error(
+                    "Please configure run_time_start and run_time_end in config.json"
+                )
                 # Wait before retrying
                 await asyncio.sleep(60)
                 continue
+        else:
+            logger.error("Configuration not loaded. Retrying in 60 seconds.")
+            await asyncio.sleep(60)
+            continue
 
         # Wait 10 minutes (600 seconds) between executions
         await asyncio.sleep(600)

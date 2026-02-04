@@ -2,7 +2,6 @@
   "print_frequency_days": 7,
   "printer_name_or_ip": "Brother_DCP_T730DW",
   "printer_tool_exe": "SumatraPDF-3.5.2-64.exe",
-  "photo_override": "",
   "dry_run": true,
   "last_printed_date": "2026-02-02",
   "run_time_start": "10:30",

@@ -1,6 +1,8 @@
 import os
 import platform
 
+from loguru import logger
+
 from config import load_config
 
 
@@ -62,20 +64,20 @@ def print_photo(file_path):
             command = f'lp "{file_path}"'
 
     else:
-        print(f"Operating system '{current_os}' is not supported for printing.")
+        logger.error(f"Operating system '{current_os}' is not supported for printing.")
         return
 
     # 2. Check if dry_run is enabled
     dry_run = config.get("dry_run", False)
     if dry_run:
-        print("DRY RUN MODE: Skipping actual print command execution.")
+        logger.info("DRY RUN MODE: Skipping actual print command execution.")
         return 0
 
     # 3. Execute the command
-    print(f"Executing print command ({current_os}): {command}")
+    logger.info(f"Executing print command ({current_os}): {command}")
     exit_code = os.system(command)
     if exit_code == 0:
-        print("Print job successfully sent to the system queue.")
+        logger.info("Print job successfully sent to the system queue.")
     else:
-        print(f"ERROR: Failed to send print job. Exit code: {exit_code}")
+        logger.error(f"Failed to send print job. Exit code: {exit_code}")
     return exit_code
