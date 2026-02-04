@@ -14,15 +14,17 @@ cd "$SCRIPT_DIR"
 echo "Building macOS executable..."
 echo "Working directory: $(pwd)"
 
-# Check if pyinstaller is installed
-if ! command -v pyinstaller &> /dev/null; then
-    echo "ERROR: pyinstaller is not installed"
-    echo "Install it with: pip install pyinstaller"
+# Install dependencies from pyproject.toml
+echo "Installing dependencies..."
+if command -v pip &> /dev/null; then
+    pip install -e . > /dev/null 2>&1 || pip install loguru pyinstaller
+else
+    echo "ERROR: pip is not installed"
     exit 1
 fi
 
 # Run pyinstaller
-pyinstaller --onefile --name printer-dont-die --target-arch arm64 --add-data "config.json:." --add-data "app/resources:app/resources" app/main.py
+pyinstaller --onefile --name printer-dont-die --target-arch arm64 --hidden-import loguru --add-data "config.json:." --add-data "app/resources:app/resources" app/main.py
 
 # Check if dist directory exists
 if [ ! -d "dist" ]; then

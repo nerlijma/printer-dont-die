@@ -14,16 +14,16 @@ cd /d "%SCRIPT_DIR%"
 echo Building Windows executable...
 echo Working directory: %CD%
 
-REM Check if pyinstaller is installed
-where pyinstaller >nul 2>&1
+REM Install dependencies from pyproject.toml
+echo Installing dependencies...
+pip install -e . >nul 2>&1
 if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: pyinstaller is not installed
-    echo Install it with: pip install pyinstaller
-    exit /b 1
+    echo WARNING: Failed to install dependencies. Trying pip install loguru pyinstaller...
+    pip install loguru pyinstaller
 )
 
 REM Run pyinstaller
-pyinstaller --onefile --name printer-dont-die --add-data="config.json;." --add-data="app/resources;app/resources" app/main.py
+pyinstaller --onefile --name printer-dont-die --hidden-import loguru --add-data="config.json;." --add-data="app/resources;app/resources" app/main.py
 
 REM Check if dist directory exists
 if not exist "dist" (

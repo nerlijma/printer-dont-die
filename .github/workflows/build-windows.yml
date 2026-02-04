@@ -1,35 +1,36 @@
 name: Build Windows Executable
 
 on:
-  workflow_dispatch:  # Manual trigger only
+  workflow_dispatch: # Manual trigger only
 
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      
-      - name: Install PyInstaller
-        run: pip install pyinstaller
-      
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+
       - name: Build executable
         run: |
-          pyinstaller --onefile --name printer-dont-die --add-data="config.json;." --add-data="app/resources;app/resources" app/main.py
-      
+          pyinstaller --onefile --name printer-dont-die --hidden-import loguru --add-data="config.json;." --add-data="app/resources;app/resources" app/main.py
+
       - name: Copy config.json to dist
         shell: cmd
         run: |
           if not exist dist\config.json (
             copy config.json dist\config.json
           )
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
